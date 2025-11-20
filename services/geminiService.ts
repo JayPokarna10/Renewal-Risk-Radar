@@ -2,7 +2,10 @@ import { GoogleGenAI } from "@google/genai";
 import { Contract } from "../types";
 
 export const generateNegotiationBrief = async (contract: Contract): Promise<string> => {
-  if (!process.env.API_KEY) {
+  // Safe check for API key to prevent crash in browser environments where 'process' is undefined
+  const apiKey = typeof process !== 'undefined' && process.env ? process.env.API_KEY : undefined;
+
+  if (!apiKey) {
     // Fallback if no API key is present for the mockup
     return `
 ## **Negotiation Strategy Brief**
@@ -32,7 +35,7 @@ If the vendor refuses to engage, we are prepared to issue a Notice of Non-Renewa
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey });
     const model = "gemini-2.5-flash";
     
     const prompt = `

@@ -6,9 +6,10 @@ export const Header: React.FC = () => {
   return (
     <header className="bg-sirion-midnight text-white h-16 flex items-center justify-between px-6 shadow-md sticky top-0 z-50">
       <div className="flex items-center gap-6">
-        {/* Sirion Logo */}
-        <div className="flex items-center text-white">
-          <SirionLogo className="h-8 w-auto" variant="white" />
+        {/* Sirion Logo + Text */}
+        <div className="flex items-center gap-3">
+          <SirionLogo className="h-8 w-8" />
+          <span className="text-xl font-semibold tracking-tight text-white font-sans">Sirion</span>
         </div>
         
         <div className="h-6 w-px bg-gray-700 mx-2"></div>
