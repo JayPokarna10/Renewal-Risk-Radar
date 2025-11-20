@@ -2,11 +2,15 @@ import { GoogleGenAI } from "@google/genai";
 import { Contract } from "../types";
 
 export const generateNegotiationBrief = async (contract: Contract): Promise<string> => {
-  // Safe check for API key to prevent crash in browser environments where 'process' is undefined
-  const apiKey = typeof process !== 'undefined' && process.env ? process.env.API_KEY : undefined;
+  // 1. Check if environment is secure and Key exists
+  const apiKey = typeof process !== 'undefined' && process.env && process.env.API_KEY 
+    ? process.env.API_KEY 
+    : '';
 
+  // 2. If no key, return the high-fidelity mock data immediately.
+  // This ensures the UI works perfectly as a static demo.
   if (!apiKey) {
-    // Fallback if no API key is present for the mockup
+    console.log("No API Key found. Using mock data generation.");
     return `
 ## **Negotiation Strategy Brief**
 
@@ -34,6 +38,7 @@ If the vendor refuses to engage, we are prepared to issue a Notice of Non-Renewa
     `.trim();
   }
 
+  // 3. If Key exists, try to use Gemini
   try {
     const ai = new GoogleGenAI({ apiKey });
     const model = "gemini-2.5-flash";
@@ -67,7 +72,24 @@ If the vendor refuses to engage, we are prepared to issue a Notice of Non-Renewa
 
     return response.text || "Error generating content.";
   } catch (error) {
-    console.error("Gemini API Error:", error);
-    return "Unable to generate brief at this time. Please check API configuration.";
+    console.error("Gemini API Error (Falling back to mock):", error);
+    // Fallback to mock if the API call fails (e.g. quota or network)
+    return `
+## **Negotiation Strategy Brief (Offline Mode)**
+
+**Subject:** Renewal Negotiation - ${contract.contractName}
+**Vendor:** ${contract.vendorName}
+
+### **Executive Summary**
+The current agreement is set to auto-renew in ${contract.daysRemaining} days. Note: Live AI generation failed, showing cached strategy.
+
+### **Key Issues**
+1.  **Commercial Risk:** ${contract.uplift} uplift is above market.
+2.  **Performance:** ${contract.slaBreaches} SLA breaches recorded.
+
+### **Proposed Ask**
+*   Waive uplift.
+*   Remove auto-renewal.
+    `.trim();
   }
 };

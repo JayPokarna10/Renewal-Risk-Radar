@@ -3,7 +3,6 @@ import { Contract } from '../types';
 import { generateNegotiationBrief } from '../services/geminiService';
 import { X, Download, Copy, Edit3, Loader2 } from 'lucide-react';
 import { Button } from '../components/Button';
-import ReactMarkdown from 'react-markdown';
 
 interface DraftModalProps {
   contract: Contract;
@@ -23,6 +22,41 @@ export const DraftModal: React.FC<DraftModalProps> = ({ contract, onClose }) => 
     };
     fetchDraft();
   }, [contract]);
+
+  // Simple Markdown Renderer to avoid external dependencies crashing the mockup
+  const renderContent = (text: string) => {
+    return text.split('\n').map((line, index) => {
+      if (line.startsWith('## ')) {
+        return <h2 key={index} className="text-xl font-semibold text-sirion-midnight mt-6 mb-3">{line.replace('## ', '')}</h2>;
+      }
+      if (line.startsWith('### ')) {
+        return <h3 key={index} className="text-lg font-semibold text-gray-800 mt-4 mb-2">{line.replace('### ', '')}</h3>;
+      }
+      if (line.startsWith('**Subject:**') || line.startsWith('**Vendor:**') || line.startsWith('**Current')) {
+         // Specific handling for header lines in the mock data
+         return <div key={index} className="text-sm text-gray-700 mb-1 font-medium" dangerouslySetInnerHTML={{ __html: line.replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-900">$1</strong>') }} />;
+      }
+      if (line.trim().startsWith('* ')) {
+        return (
+          <div key={index} className="flex gap-2 mb-2 pl-4">
+            <span className="text-sirion-teal">•</span>
+            <span className="text-gray-700" dangerouslySetInnerHTML={{ __html: line.replace('* ', '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+          </div>
+        );
+      }
+      if (line.match(/^\d\./)) {
+         return (
+            <div key={index} className="flex gap-2 mb-2 pl-4">
+              <span className="font-bold text-gray-900 text-sm">{line.split('.')[0]}.</span>
+              <span className="text-gray-700" dangerouslySetInnerHTML={{ __html: line.substring(line.indexOf('.') + 1).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+            </div>
+         );
+      }
+      if (line.trim() === '') return <div key={index} className="h-2" />;
+      
+      return <p key={index} className="mb-4 leading-relaxed text-gray-700" dangerouslySetInnerHTML={{ __html: line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />;
+    });
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -53,18 +87,7 @@ export const DraftModal: React.FC<DraftModalProps> = ({ contract, onClose }) => 
                 </div>
               ) : (
                 <div className="prose prose-sm max-w-none font-serif text-gray-800">
-                   <ReactMarkdown 
-                    components={{
-                      h1: ({node, ...props}) => <h1 className="text-2xl font-bold text-sirion-midnight mb-6 pb-2 border-b border-gray-200" {...props} />,
-                      h2: ({node, ...props}) => <h2 className="text-xl font-semibold text-sirion-midnight mt-6 mb-3" {...props} />,
-                      h3: ({node, ...props}) => <h3 className="text-lg font-semibold text-gray-800 mt-4 mb-2" {...props} />,
-                      p: ({node, ...props}) => <p className="mb-4 leading-relaxed" {...props} />,
-                      ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-4 space-y-2" {...props} />,
-                      li: ({node, ...props}) => <li className="text-gray-700" {...props} />,
-                    }}
-                   >
-                     {content}
-                   </ReactMarkdown>
+                   {renderContent(content)}
                 </div>
               )}
             </div>
